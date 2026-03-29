@@ -18,6 +18,8 @@
 
 static const char *TAG = "VOLCASYNC_LINK";
 static const gpio_num_t LED_GPIO = GPIO_NUM_2;
+static const gpio_num_t SYNC_GPIO = GPIO_NUM_25;
+static const uint32_t PULSE_WIDTH_MS = 15;
 
 static uint64_t last_whole_beat = UINT64_MAX;
 
@@ -26,14 +28,16 @@ static void set_led(bool on)
     gpio_set_level(LED_GPIO, on ? 1 : 0);
 }
 
-static void pulse_led_briefly(void)
+static void pulse_sync_and_led(void)
 {
+    gpio_set_level(SYNC_GPIO, 1);
     set_led(true);
-    vTaskDelay(pdMS_TO_TICKS(40));
+    vTaskDelay(pdMS_TO_TICKS(PULSE_WIDTH_MS));
+    gpio_set_level(SYNC_GPIO, 0);
     set_led(false);
 }
 
-static void log_link_state_and_blink(abl_link link)
+static void log_link_state_and_pulse(abl_link link)
 {
     abl_link_session_state session = abl_link_create_session_state();
     if (!session) {
@@ -52,7 +56,7 @@ static void log_link_state_and_blink(abl_link link)
     uint64_t whole_beat = (uint64_t)floor(beat);
     if (whole_beat != last_whole_beat) {
         last_whole_beat = whole_beat;
-        pulse_led_briefly();
+        pulse_sync_and_led();
     }
 
     ESP_LOGI(TAG,
@@ -75,7 +79,7 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << LED_GPIO),
+        .pin_bit_mask = (1ULL << LED_GPIO) | (1ULL << SYNC_GPIO),
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -83,6 +87,7 @@ void app_main(void)
     };
     ESP_ERROR_CHECK(gpio_config(&io_conf));
     set_led(false);
+    gpio_set_level(SYNC_GPIO, 0);
 
     ESP_LOGI(TAG, "Connecting to Wi-Fi...");
     ESP_ERROR_CHECK(example_connect());
@@ -96,10 +101,10 @@ void app_main(void)
 
     abl_link_enable(link, true);
     ESP_LOGI(TAG, "Ableton Link enabled");
-    ESP_LOGI(TAG, "Milestone 2 active: LED pulses once per Link beat on GPIO2");
+    ESP_LOGI(TAG, "Milestone 3 active: whole-beat pulse on GPIO25, LED mirror on GPIO2");
 
     while (1) {
-        log_link_state_and_blink(link);
+        log_link_state_and_pulse(link);
         vTaskDelay(pdMS_TO_TICKS(25));
     }
 }
