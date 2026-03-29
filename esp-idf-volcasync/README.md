@@ -37,3 +37,20 @@ In `menuconfig`, set your Wi-Fi credentials under the example connection configu
 ## Next milestone
 
 Once Link peer visibility works, add the Volca pulse scheduler as the next step.
+
+## Milestone 2
+
+The current `main.c` is now prepared for **Milestone 2**:
+- connects to Wi-Fi
+- joins Ableton Link
+- logs peer count / tempo / beat / phase
+- pulses the onboard LED once per whole Link beat
+
+### Test expectation
+
+With djay or another Ableton Link peer active on the same Wi-Fi:
+- peer count should rise above 0
+- beat should advance continuously
+- the LED on GPIO2 should pulse on each beat
+
+This is the step right before replacing the LED pulse with Volca sync pulse output.
