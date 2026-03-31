@@ -1,0 +1,9 @@
+*.pyc
+*.o
+*.a
+*.so
+.DS_Store
+.vscode/
+.idea/
+build/
+.secrets.local
